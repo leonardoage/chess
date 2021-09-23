@@ -25,11 +25,18 @@ public class ChessMatch {
 		return mat;
 	}
 
+	public boolean[][] possibleMoves(ChessPosition sourcePosition ) { 
+		Position p = sourcePosition.toPosition(); 
+		validateSourcePosition(p);
+		return board.piece(p).possibleMoves();
+	}
+	
 	public ChessPiece performChessMove(ChessPosition origem, ChessPosition destino) {
 		Position source = origem.toPosition();
 		Position target = destino.toPosition();
 
 		validateSourcePosition(source);
+		validateTargetPosition(source, target);
 
 		// Piece capturedPiece = makeMove(source, target);
 		// return capturedPiece ;
@@ -39,9 +46,19 @@ public class ChessMatch {
 
 	private void validateSourcePosition(Position pos) {
 		if (!board.thereIsAPiece(pos)) {
-			throw new ChessException("Não há peça na posição informada (" + pos.toString() + ")");
+			throw new ChessException("Nao ha peca na posicao informada (" + pos.toString() + ")");
+		}
+		if (!board.piece(pos).isThereAnyPossibleMove()) { 
+			throw new ChessException("Nao ha movimento possivel para a peca na posicao informada.");			
 		}
 	}
+	
+	private void validateTargetPosition(Position source, Position target) {
+		if (!board.piece(source).possibleMove(target)) { 
+			throw new ChessException("A peca nao pode ser movida para o destino desejado");
+		}
+	}
+
 
 	private Piece makeMove(Position origem, Position destino) {
 		Piece p = board.removePiece(origem);

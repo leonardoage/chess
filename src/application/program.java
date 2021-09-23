@@ -22,16 +22,23 @@ public class program {
 				System.out.println();
 				System.out.print("Origem: ");
 				ChessPosition source = UI.readChessPosition(sc);
+				
+				UI.clearScreen();
+				UI.printBoard(game.getPieces(), game.possibleMoves(source));
+				
 				System.out.println();
 				System.out.print("Destino: ");
 				ChessPosition target = UI.readChessPosition(sc);
 
 				ChessPiece captured = game.performChessMove(source, target);
-			} catch (ChessException e) {
+
+			} 
+			catch (ChessException e) {
 				System.out.println(e.getMessage());
 				System.out.println("[Tecle ENTER para continuar]");
 				sc.nextLine();
-			} catch (InputMismatchException e) {
+			} 
+			catch (InputMismatchException e) {
 				System.out.println(e.getMessage());
 				System.out.println("[Tecle ENTER para continuar]");
 				sc.nextLine();
