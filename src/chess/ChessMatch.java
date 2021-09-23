@@ -10,9 +10,22 @@ public class ChessMatch {
 
 	private Board board;
 
+	private int turn;
+	private Color currentPlayer;
+
 	public ChessMatch() {
 		board = new Board(8, 8);
+		turn = 1;
+		currentPlayer = Color.WHITE;
 		initialSetup();
+	}
+
+	public int getTurn() {
+		return turn;
+	}
+
+	public Color getCurrentPlayer() {
+		return currentPlayer;
 	}
 
 	public ChessPiece[][] getPieces() {
@@ -25,12 +38,17 @@ public class ChessMatch {
 		return mat;
 	}
 
-	public boolean[][] possibleMoves(ChessPosition sourcePosition ) { 
-		Position p = sourcePosition.toPosition(); 
+	private void nextTurn() {
+		turn++;
+		currentPlayer = (currentPlayer == Color.BLACK ? Color.WHITE : Color.BLACK);
+	}
+
+	public boolean[][] possibleMoves(ChessPosition sourcePosition) {
+		Position p = sourcePosition.toPosition();
 		validateSourcePosition(p);
 		return board.piece(p).possibleMoves();
 	}
-	
+
 	public ChessPiece performChessMove(ChessPosition origem, ChessPosition destino) {
 		Position source = origem.toPosition();
 		Position target = destino.toPosition();
@@ -40,6 +58,7 @@ public class ChessMatch {
 
 		// Piece capturedPiece = makeMove(source, target);
 		// return capturedPiece ;
+		nextTurn();
 		return (ChessPiece) makeMove(source, target);
 
 	}
@@ -48,17 +67,19 @@ public class ChessMatch {
 		if (!board.thereIsAPiece(pos)) {
 			throw new ChessException("Nao ha peca na posicao informada (" + pos.toString() + ")");
 		}
-		if (!board.piece(pos).isThereAnyPossibleMove()) { 
-			throw new ChessException("Nao ha movimento possivel para a peca na posicao informada.");			
+		if (currentPlayer != ((ChessPiece) board.piece(pos)).getColor()) {
+			throw new ChessException("A peca escolhida não é sua.");
 		}
-	}
-	
-	private void validateTargetPosition(Position source, Position target) {
-		if (!board.piece(source).possibleMove(target)) { 
-			throw new ChessException("A peca nao pode ser movida para o destino desejado");
+		if (!board.piece(pos).isThereAnyPossibleMove()) {
+			throw new ChessException("Nao ha movimento possivel para a peca na posicao informada.");
 		}
 	}
 
+	private void validateTargetPosition(Position source, Position target) {
+		if (!board.piece(source).possibleMove(target)) {
+			throw new ChessException("A peca nao pode ser movida para o destino desejado");
+		}
+	}
 
 	private Piece makeMove(Position origem, Position destino) {
 		Piece p = board.removePiece(origem);

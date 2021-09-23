@@ -1,8 +1,12 @@
 package application;
 
+import java.util.Arrays;
 import java.util.InputMismatchException;
+import java.util.List;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
+import chess.ChessMatch;
 import chess.ChessPiece;
 import chess.ChessPosition;
 import chess.Color;
@@ -28,7 +32,7 @@ public class UI {
 	public static final String ANSI_CYAN_BACKGROUND = "\u001B[46m";
 	public static final String ANSI_WHITE_BACKGROUND = "\u001B[47m";
 
-	public static void clearScreen() { 
+	public static void clearScreen() {
 		System.out.print("\033[H\033[2J");
 		System.out.flush();
 	}
@@ -57,7 +61,16 @@ public class UI {
 		}
 
 	}
-	
+
+	public static void printMatch(ChessMatch partida, List<ChessPiece> pecasCapturadas) {
+		printBoard(partida.getPieces());
+		System.out.println();
+		printCapturesPieces(pecasCapturadas);
+		System.out.println();
+		System.out.println("Turn: " + partida.getTurn());
+		System.out.println("Wating player: " + partida.getCurrentPlayer());
+	}
+
 	public static void printBoard(ChessPiece[][] pieces) {
 		System.out.println("  a b c d e f g h  ");
 		for (int i = 0; i < pieces.length; i++) {
@@ -71,13 +84,13 @@ public class UI {
 	}
 
 	private static void printPiece(ChessPiece piece, boolean background) {
-		
-		if (background) { 
+
+		if (background) {
 			System.out.print(ANSI_BLUE_BACKGROUND);
 		}
-		
+
 		if (piece == null) {
-			System.out.print("-" + ANSI_RESET );
+			System.out.print("-" + ANSI_RESET);
 		} else {
 			if (piece.getColor() == Color.WHITE) {
 				System.out.print(ANSI_WHITE + piece + ANSI_RESET);
@@ -86,5 +99,25 @@ public class UI {
 			}
 		}
 		System.out.print(" ");
+	}
+
+	private static void printCapturesPieces(List<ChessPiece> captured) {
+
+		List<ChessPiece> whitePieces = captured.stream().filter(x -> x.getColor() == Color.WHITE)
+				.collect(Collectors.toList());
+		List<ChessPiece> blackPieces = captured.stream().filter(x -> x.getColor() == Color.BLACK)
+				.collect(Collectors.toList());
+
+		System.out.println("Pecas Capturadas: ");
+		System.out.println("BRANCAS: ");
+
+		System.out.print(ANSI_WHITE);
+		System.out.print(Arrays.toString(whitePieces.toArray()));
+		System.out.print(ANSI_RESET);
+
+		System.out.println("PRETAS: ");
+		System.out.print(ANSI_YELLOW);
+		System.out.print(Arrays.toString(blackPieces.toArray()));
+		System.out.print(ANSI_RESET);
 	}
 }
