@@ -68,7 +68,7 @@ public class UI {
 		printCapturesPieces(pecasCapturadas);
 		System.out.println();
 		System.out.println("Turn: " + partida.getTurn());
-		System.out.println("Wating player: " + partida.getCurrentPlayer());
+		System.out.println("Wating player: " + (partida.getCurrentPlayer() == Color.BLACK? ANSI_YELLOW : ANSI_WHITE) +  partida.getCurrentPlayer() + ANSI_RESET) ;
 	}
 
 	public static void printBoard(ChessPiece[][] pieces) {
@@ -109,15 +109,16 @@ public class UI {
 				.collect(Collectors.toList());
 
 		System.out.println("Pecas Capturadas: ");
-		System.out.println("BRANCAS: ");
+		System.out.print("BRANCAS: ");
 
 		System.out.print(ANSI_WHITE);
 		System.out.print(Arrays.toString(whitePieces.toArray()));
 		System.out.print(ANSI_RESET);
-
-		System.out.println("PRETAS: ");
+		System.out.println(); 
+		System.out.print("PRETAS:  ");
 		System.out.print(ANSI_YELLOW);
 		System.out.print(Arrays.toString(blackPieces.toArray()));
 		System.out.print(ANSI_RESET);
+		System.out.println(); 
 	}
 }
