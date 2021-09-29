@@ -37,7 +37,6 @@ public class program {
 				if (captured != null) {
 					pecasCapturadas.add(captured); 
 				}
-
 			} 
 			catch (ChessException e) {
 				System.out.println(e.getMessage());
