@@ -7,7 +7,9 @@ import java.util.stream.Collectors;
 import boardgame.Board;
 import boardgame.Piece;
 import boardgame.Position;
+import chess.pieces.Bishop;
 import chess.pieces.King;
+import chess.pieces.Peao;
 import chess.pieces.Rook;
 
 public class ChessMatch {
@@ -111,9 +113,10 @@ public class ChessMatch {
 	}
 
 	private Piece makeMove(Position origem, Position destino) {
-		Piece p = board.removePiece(origem);
-		Piece captured = board.removePiece(destino);
-		board.placePiece(p, destino);
+		ChessPiece p = (ChessPiece)board.removePiece(origem);
+		p.increaseMoveCount();
+		Piece captured = board.removePiece(destino); 
+		board.placePiece(p, destino); //Upcasting por padrão 
 		if (captured != null) {
 			piecesOnTheBoard.remove(captured);
 			piecesCaptured.add(captured);
@@ -122,8 +125,9 @@ public class ChessMatch {
 	}
 
 	private void undoMove(Position origem, Position destino, Piece pecaCapturada) {
-		Piece p = board.removePiece(destino);
-		board.placePiece(p, origem);
+		ChessPiece p = (ChessPiece)board.removePiece(destino);
+		p.decreaseMoveCount();
+		board.placePiece(p, origem); //Upcasting por padrão
 		if (pecaCapturada != null) {
 			board.placePiece(pecaCapturada, destino);
 			piecesCaptured.remove(pecaCapturada);
@@ -193,25 +197,33 @@ public class ChessMatch {
 	}
 
 	private void initialSetup() {
-//		placeNewPiece('c', 1, new Rook(board, Color.WHITE));
-//		placeNewPiece('c', 2, new Rook(board, Color.WHITE));
-//		placeNewPiece('d', 2, new Rook(board, Color.WHITE));
-//		placeNewPiece('e', 2, new Rook(board, Color.WHITE));
-//		placeNewPiece('e', 1, new Rook(board, Color.WHITE));
-//		placeNewPiece('d', 1, new King(board, Color.WHITE));
-//
-//		placeNewPiece('c', 7, new Rook(board, Color.BLACK));
-//		placeNewPiece('c', 8, new Rook(board, Color.BLACK));
-//		placeNewPiece('d', 7, new Rook(board, Color.BLACK));
-//		placeNewPiece('e', 7, new Rook(board, Color.BLACK));
-//		placeNewPiece('e', 8, new Rook(board, Color.BLACK));
-//		placeNewPiece('d', 8, new King(board, Color.BLACK));
-		placeNewPiece('h', 7, new Rook(board, Color.WHITE));
-		placeNewPiece('d', 1, new Rook(board, Color.WHITE));
+		placeNewPiece('a', 1, new Rook(board, Color.WHITE));
+		placeNewPiece('c', 1, new Bishop(board, Color.WHITE));
 		placeNewPiece('e', 1, new King(board, Color.WHITE));
+		placeNewPiece('f', 1, new Bishop(board, Color.WHITE));
+		placeNewPiece('h', 1, new Rook(board, Color.WHITE));
+		placeNewPiece('a', 2, new Peao(board, Color.WHITE));
+		placeNewPiece('b', 2, new Peao(board, Color.WHITE));
+		placeNewPiece('c', 2, new Peao(board, Color.WHITE));
+		placeNewPiece('d', 2, new Peao(board, Color.WHITE));
+		placeNewPiece('e', 2, new Peao(board, Color.WHITE));
+		placeNewPiece('f', 2, new Peao(board, Color.WHITE));
+		placeNewPiece('g', 2, new Peao(board, Color.WHITE));
+		placeNewPiece('h', 2, new Peao(board, Color.WHITE));
 
-		placeNewPiece('b', 8, new Rook(board, Color.BLACK));
-		placeNewPiece('a', 8, new King(board, Color.BLACK));
+		placeNewPiece('a', 8, new Rook(board, Color.BLACK));
+		placeNewPiece('e', 8, new King(board, Color.BLACK));
+		placeNewPiece('c', 8, new Bishop(board, Color.BLACK));
+		placeNewPiece('f', 8, new Bishop(board, Color.BLACK));
+		placeNewPiece('h', 8, new Rook(board, Color.BLACK));
+		placeNewPiece('a', 7, new Peao(board, Color.BLACK));
+		placeNewPiece('b', 7, new Peao(board, Color.BLACK));
+		placeNewPiece('c', 7, new Peao(board, Color.BLACK));
+		placeNewPiece('d', 7, new Peao(board, Color.BLACK));
+		placeNewPiece('e', 7, new Peao(board, Color.BLACK));
+		placeNewPiece('f', 7, new Peao(board, Color.BLACK));
+		placeNewPiece('g', 7, new Peao(board, Color.BLACK));
+		placeNewPiece('h', 7, new Peao(board, Color.BLACK));
 
 	}
 
