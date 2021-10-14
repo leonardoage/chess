@@ -1,5 +1,6 @@
 package chess;
 
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,6 +25,8 @@ public class ChessMatch {
 	private Color currentPlayer;
 	private boolean check;
 	private boolean checkMate;
+	private ChessPiece enPassantVulnable;
+	private ChessPiece promoted;
 
 	public ChessMatch() {
 		board = new Board(8, 8);
@@ -44,8 +47,16 @@ public class ChessMatch {
 		return check;
 	}
 
+	public ChessPiece getpromoted() {
+		return promoted;
+	}
+
 	public boolean isCheckMate() {
 		return checkMate;
+	}
+
+	public ChessPiece getEnPassantVulnerable() {
+		return enPassantVulnable;
 	}
 
 	public ChessPiece[][] getPieces() {
@@ -83,16 +94,68 @@ public class ChessMatch {
 			throw new ChessException("Voce nao pode se colocar em check.");
 		}
 
+		ChessPiece movedPiece = (ChessPiece) board.piece(target);
+
+		// #special move promotion
+		if (movedPiece instanceof Peao) {
+			if (movedPiece.getColor() == Color.WHITE && target.getRow() == 0
+					|| movedPiece.getColor() == Color.BLACK && target.getRow() == 7) {
+				promoted = (ChessPiece) board.piece(target);
+				promoted = replacePromotedPiece("Q");
+			}
+
+		}
+
 		check = testCheck(Opponent(currentPlayer));
 
-		if (check) {
-			if (testCheckMate(Opponent(currentPlayer))) {
-				checkMate = true;
-			}
+		if (check && testCheckMate(Opponent(currentPlayer))) {
+			checkMate = true;
+
+		} else {
+			nextTurn();
 		}
-		nextTurn();
+
+		// enPassant
+		if (movedPiece instanceof Peao
+				&& (target.getRow() == source.getRow() + 2 || target.getRow() == source.getRow() - 2)) {
+			enPassantVulnable = movedPiece;
+		} else {
+			enPassantVulnable = null;
+		}
+
 		return (ChessPiece) captured;
 
+	}
+
+	public ChessPiece replacePromotedPiece(String type) {
+		if (promoted == null) {
+			throw new IllegalStateException("There is no piece to be promoted");
+		}
+
+		if (type.toString().toUpperCase().equals("B") && type.toString().toUpperCase().equals("N")
+				&& type.toString().toUpperCase().equals("R") && type.toString().toUpperCase().equals("Q")) {
+			throw new InvalidParameterException("Invalid type for promotion");
+		}
+
+		Position pos = promoted.getChessPosition().toPosition();
+		Piece p = board.removePiece(pos);
+		piecesOnTheBoard.remove(p);
+
+		ChessPiece newPiece = newPiece(type, promoted.getColor());
+		board.placePiece(newPiece, pos);
+		piecesOnTheBoard.add(newPiece);
+
+		return newPiece;
+	}
+
+	private ChessPiece newPiece(String type, Color color) {
+		if (type.toString().toUpperCase().equals("B"))
+			return new Bishop(board, color);
+		if (type.toString().toUpperCase().equals("N"))
+			return new Cavalo(board, color);
+		if (type.toString().toUpperCase().equals("B"))
+			return new Queen(board, color);
+		return new Rook(board, color);
 	}
 
 	private void validateSourcePosition(Position pos) {
@@ -135,13 +198,30 @@ public class ChessMatch {
 		// special move castling queen side rook
 		if (p instanceof King && destino.getColumn() == origem.getColumn() - 2) {
 			Position origemT1 = new Position(origem.getRow(), origem.getColumn() - 4);
-			Position destinoT2 = new Position(origem.getRow(), origem.getColumn()  -1);
+			Position destinoT2 = new Position(origem.getRow(), origem.getColumn() - 1);
 			ChessPiece rook = (ChessPiece) board.removePiece(origemT1);
 			board.placePiece(rook, destinoT2);
 			rook.increaseMoveCount();
 		}
-		
+
+		// #special move
+		if (p instanceof Peao) {
+			if (origem.getColumn() != destino.getColumn() && captured == null) {
+				Position posPeao;
+				if (p.getColor() == Color.WHITE) {
+					posPeao = new Position(destino.getRow() + 1, destino.getColumn());
+				} else {
+					posPeao = new Position(destino.getRow() - 1, destino.getColumn());
+
+				}
+				captured = board.removePiece(posPeao);
+				piecesOnTheBoard.remove(captured);
+				piecesCaptured.add(captured);
+			}
+		}
+
 		return captured;
+
 	}
 
 	private void undoMove(Position origem, Position destino, Piece pecaCapturada) {
@@ -153,7 +233,7 @@ public class ChessMatch {
 			piecesCaptured.remove(pecaCapturada);
 			piecesOnTheBoard.add(pecaCapturada);
 		}
-		
+
 		// special move castling king side rook
 		if (p instanceof King && destino.getColumn() == origem.getColumn() + 2) {
 			Position origemT1 = new Position(origem.getRow(), origem.getColumn() + 3);
@@ -166,11 +246,27 @@ public class ChessMatch {
 		// special move castling queen side rook
 		if (p instanceof King && destino.getColumn() == origem.getColumn() - 2) {
 			Position origemT1 = new Position(origem.getRow(), origem.getColumn() - 4);
-			Position destinoT2 = new Position(origem.getRow(), origem.getColumn()  -1);
+			Position destinoT2 = new Position(origem.getRow(), origem.getColumn() - 1);
 			ChessPiece rook = (ChessPiece) board.removePiece(destinoT2);
 			board.placePiece(rook, origemT1);
 			rook.decreaseMoveCount();
-		}		
+		}
+
+		// #special move enPassant
+		if (p instanceof Peao) {
+			if (origem.getColumn() != destino.getColumn() && pecaCapturada == enPassantVulnable) {
+				ChessPiece peao = (ChessPiece) board.removePiece(destino);
+				Position posPeao;
+				if (p.getColor() == Color.WHITE) {
+					posPeao = new Position(3, destino.getColumn());
+				} else {
+					posPeao = new Position(4, destino.getColumn());
+
+				}
+				board.placePiece(peao, posPeao);
+			}
+		}
+
 	}
 
 	private Color Opponent(Color color) {
@@ -243,14 +339,14 @@ public class ChessMatch {
 		placeNewPiece('f', 1, new Bishop(board, Color.WHITE));
 		placeNewPiece('g', 1, new Cavalo(board, Color.WHITE));
 		placeNewPiece('h', 1, new Rook(board, Color.WHITE));
-		placeNewPiece('a', 2, new Peao(board, Color.WHITE));
-		placeNewPiece('b', 2, new Peao(board, Color.WHITE));
-		placeNewPiece('c', 2, new Peao(board, Color.WHITE));
-		placeNewPiece('d', 2, new Peao(board, Color.WHITE));
-		placeNewPiece('e', 2, new Peao(board, Color.WHITE));
-		placeNewPiece('f', 2, new Peao(board, Color.WHITE));
-		placeNewPiece('g', 2, new Peao(board, Color.WHITE));
-		placeNewPiece('h', 2, new Peao(board, Color.WHITE));
+		placeNewPiece('a', 2, new Peao(board, Color.WHITE, this));
+		placeNewPiece('b', 2, new Peao(board, Color.WHITE, this));
+		placeNewPiece('c', 2, new Peao(board, Color.WHITE, this));
+		placeNewPiece('d', 2, new Peao(board, Color.WHITE, this));
+		placeNewPiece('e', 2, new Peao(board, Color.WHITE, this));
+		placeNewPiece('f', 2, new Peao(board, Color.WHITE, this));
+		placeNewPiece('g', 2, new Peao(board, Color.WHITE, this));
+		placeNewPiece('h', 2, new Peao(board, Color.WHITE, this));
 
 		placeNewPiece('a', 8, new Rook(board, Color.BLACK));
 		placeNewPiece('b', 8, new Cavalo(board, Color.BLACK));
@@ -260,14 +356,19 @@ public class ChessMatch {
 		placeNewPiece('f', 8, new Bishop(board, Color.BLACK));
 		placeNewPiece('g', 8, new Cavalo(board, Color.BLACK));
 		placeNewPiece('h', 8, new Rook(board, Color.BLACK));
-		placeNewPiece('a', 7, new Peao(board, Color.BLACK));
-		placeNewPiece('b', 7, new Peao(board, Color.BLACK));
-		placeNewPiece('c', 7, new Peao(board, Color.BLACK));
-		placeNewPiece('d', 7, new Peao(board, Color.BLACK));
-		placeNewPiece('e', 7, new Peao(board, Color.BLACK));
-		placeNewPiece('f', 7, new Peao(board, Color.BLACK));
-		placeNewPiece('g', 7, new Peao(board, Color.BLACK));
-		placeNewPiece('h', 7, new Peao(board, Color.BLACK));
+		placeNewPiece('a', 7, new Peao(board, Color.BLACK, this));
+		placeNewPiece('b', 7, new Peao(board, Color.BLACK, this));
+		placeNewPiece('c', 7, new Peao(board, Color.BLACK, this));
+		placeNewPiece('d', 7, new Peao(board, Color.BLACK, this));
+		placeNewPiece('e', 7, new Peao(board, Color.BLACK, this));
+		placeNewPiece('f', 7, new Peao(board, Color.BLACK, this));
+		placeNewPiece('g', 7, new Peao(board, Color.BLACK, this));
+		placeNewPiece('h', 7, new Peao(board, Color.BLACK, this));
+
+		performChessMove(new ChessPosition('e', 2), new ChessPosition('e', 4));
+		performChessMove(new ChessPosition('b', 7), new ChessPosition('b', 5));
+		performChessMove(new ChessPosition('e', 4), new ChessPosition('e', 5));
+//		performChessMove( new ChessPosition('f', 7), new ChessPosition('f', 5)); 
 
 	}
 
